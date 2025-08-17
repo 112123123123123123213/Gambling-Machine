@@ -32,26 +32,28 @@ def set_balance(user_id, amount):
     save_balances(balances)
 
 @bot.command()
-async def balance(ctx):
-    bal = get_balance(ctx.author.id)
-    await ctx.send(f"💰 {ctx.author.mention}, your current balance is **{bal}** credits.")
-
-@bot.command()
 async def slot(ctx, bet: int):
+    if ctx.channel.id != ALLOWED_CHANNEL:
+        return
+
     if bet < 10:
-        await ctx.send("❌ Minimum bet is **10**!")
+        await ctx.send("❌ Minimum bet is 10!")
         return
-    
+
     bal = get_balance(ctx.author.id)
-    if bal < bet:
-        await ctx.send("❌ You don't have enough credits to play!")
-        return
+    if bal <= 0:
+        # Авто-поповнення
+        bal += 50
+        set_balance(ctx.author.id, bal)
+        await ctx.send(f"💸 Your balance was 0, so we gave you **50 credits** to continue playing!")
     
-    # Slot symbols
+    if bal < bet:
+        await ctx.send("❌ Not enough money!")
+        return
+
     symbols = ["🍒", "🍋", "🍇", "7️⃣", "⭐"]
     result = [random.choice(symbols) for _ in range(3)]
 
-    # Payout logic
     if result[0] == result[1] == result[2]:
         win = bet * 5
         message = f"🎉 JACKPOT!!! You won **{win}** credits! 🎉"
@@ -62,16 +64,11 @@ async def slot(ctx, bet: int):
         win = 0
         message = f"😢 You lost your bet of **{bet}** credits. Better luck next time!"
 
-    # Update balance
     new_balance = bal - bet + win
     set_balance(ctx.author.id, new_balance)
 
-    # Output
     await ctx.send(
         f"🎰 | {' | '.join(result)} |\n"
         f"{message}\n"
         f"💰 Your new balance: **{new_balance}** credits."
     )
-
-bot.run(TOKEN)
-
