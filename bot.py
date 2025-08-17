@@ -4,8 +4,8 @@ import random
 import json
 import os
 
-import os
 TOKEN = os.environ["DISCORD_TOKEN"]
+
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
 # Balance file
